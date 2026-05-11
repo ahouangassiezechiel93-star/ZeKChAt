@@ -6,7 +6,14 @@
 <meta name="theme-color" content="#0a0f1e"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>ZeKChAt v2</title>
+<title>ZeKChAt</title>
+<link rel="manifest" id="pwaManifest"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="ZeKChAt"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="application-name" content="ZeKChAt"/>
+<meta name="msapplication-TileColor" content="#0a0f1e"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -387,6 +394,48 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 
 /* SWIPE TO REPLY VISUAL */
 .msg-bubble-wrap { user-select: none; }
+
+/* ── CHAT SEARCH BAR ── */
+.chat-search-bar { display:none; align-items:center; gap:10px; padding:8px 14px; background:var(--bg2); border-bottom:1px solid var(--border); flex-shrink:0; }
+.chat-search-bar.show { display:flex; }
+.chat-search-bar input { flex:1; background:var(--bg); border:1.5px solid var(--border); border-radius:20px; padding:8px 14px; color:var(--text); font-family:var(--font-body); font-size:0.88rem; outline:none; }
+.chat-search-bar input:focus { border-color:var(--accent); }
+.chat-search-bar-nav { display:flex; gap:4px; }
+.chat-search-nav-btn { border:none; background:var(--surface); color:var(--text2); width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center; }
+.chat-search-close { border:none; background:transparent; color:var(--text3); font-size:1.1rem; cursor:pointer; }
+.msg-highlight { background:rgba(0,212,170,0.25) !important; outline:2px solid var(--accent); border-radius:4px; }
+
+/* ── REACTION CHIP with count ── */
+.reaction-chip { background:rgba(255,255,255,0.08); border:1px solid var(--border); border-radius:20px; padding:3px 9px; font-size:0.78rem; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:3px; user-select:none; }
+.reaction-chip .r-count { font-size:0.72rem; font-weight:600; color:var(--text2); }
+.reaction-chip.mine .r-count { color:var(--accent); }
+.reaction-chip:active { transform:scale(0.93); }
+
+/* ── FORWARD MODAL ── */
+.forward-modal-list { display:flex; flex-direction:column; gap:2px; max-height:55dvh; overflow-y:auto; margin-top:10px; }
+.forward-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:var(--radius-sm); cursor:pointer; transition:background 0.15s; }
+.forward-item:active { background:var(--surface); }
+.forward-item-avatar { width:42px; height:42px; border-radius:50%; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:1.2rem; overflow:hidden; flex-shrink:0; }
+.forward-item-avatar img { width:100%;height:100%;object-fit:cover; }
+.forward-item-name { font-size:0.9rem; font-weight:500; }
+.forward-item-sub { font-size:0.75rem; color:var(--text2); }
+
+/* ── SETTINGS ROWS ── */
+.settings-row { padding:13px 12px; border-radius:var(--radius-sm); cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:background 0.15s; }
+.settings-row:active { background:var(--surface); }
+.settings-section-title { font-size:0.75rem; color:var(--text3); text-transform:uppercase; letter-spacing:0.6px; font-weight:600; padding:10px 4px 4px; }
+.settings-toggle { display:flex; align-items:center; gap:10px; padding:13px 12px; border-radius:var(--radius-sm); cursor:pointer; }
+.settings-toggle-label { flex:1; }
+.settings-toggle-label .sub { font-size:0.75rem; color:var(--text3); margin-top:2px; display:block; }
+.toggle-switch { position:relative; width:44px; height:24px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
+.toggle-track { position:absolute; inset:0; background:var(--surface2); border-radius:12px; transition:background 0.2s; }
+.toggle-thumb { position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.3); }
+.toggle-switch input:checked ~ .toggle-track { background:var(--accent); }
+.toggle-switch input:checked ~ .toggle-thumb { transform:translateX(20px); }
+.theme-swatch { width:48px; height:48px; border-radius:12px; cursor:pointer; border:3px solid transparent; transition:all 0.15s; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
+.theme-swatch.active { border-color:var(--accent); transform:scale(1.08); }
+.font-size-demo { font-size:1rem; color:var(--text); text-align:center; padding:8px; background:var(--surface); border-radius:8px; margin:8px 0; }
 </style>
 </head>
 <body>
@@ -455,6 +504,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
     <div class="top-nav-actions">
       <button class="nav-btn" onclick="openModal('searchModal')" title="Rechercher">🔍</button>
       <button class="nav-btn" onclick="openModal('newChatModal')" title="Nouveau chat">✏️</button>
+      <button class="nav-btn" id="pwaInstallBtn" onclick="triggerPWAInstall()" title="Installer l'app" style="display:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;font-size:0.75rem;width:auto;padding:0 10px;border-radius:10px;gap:4px">📲 Installer</button>
       <button class="nav-btn" onclick="openModal('profileModal')" title="Profil" id="profileBtn">
         <span id="navAvatarEmoji">👤</span>
       </button>
@@ -514,6 +564,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
       <div class="chat-header-status" id="chatHeaderStatus">en ligne</div>
     </div>
     <div class="chat-header-actions">
+      <button class="nav-btn" onclick="toggleChatSearch()" title="Rechercher" id="chatSearchBtn">🔍</button>
       <button class="nav-btn" onclick="initiateCall('audio')" title="Appel audio">📞</button>
       <button class="nav-btn" onclick="initiateCall('video')" title="Appel vidéo">📹</button>
       <button class="nav-btn" onclick="openChatInfo()" title="Info">ℹ️</button>
@@ -525,6 +576,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
     <span>📌</span>
     <span id="pinnedText" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     <span style="color:var(--text3);font-size:0.8rem" onclick="event.stopPropagation();hidePinnedBanner()">✕</span>
+  </div>
+
+  <!-- CHAT SEARCH BAR -->
+  <div class="chat-search-bar" id="chatSearchBar">
+    <input type="text" id="chatSearchInput" placeholder="Rechercher dans la conversation..." oninput="searchInChat()" autocomplete="off"/>
+    <div class="chat-search-bar-nav">
+      <button class="chat-search-nav-btn" onclick="navChatSearch(-1)" title="Précédent">▲</button>
+      <button class="chat-search-nav-btn" onclick="navChatSearch(1)" title="Suivant">▼</button>
+    </div>
+    <span id="chatSearchCount" style="font-size:0.75rem;color:var(--text3);white-space:nowrap;min-width:36px;text-align:center"></span>
+    <button class="chat-search-close" onclick="closeChatSearch()">✕</button>
   </div>
 
   <!-- TYPING -->
@@ -761,9 +823,23 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
     <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:8px;">
       <div style="font-size:0.8rem;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Paramètres</div>
       <div style="display:flex;flex-direction:column;gap:2px;">
-        <div style="padding:12px;border-radius:var(--radius-sm);cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toast('Notifications — bientôt !')"><span>🔔 Notifications</span><span style="color:var(--text3)">›</span></div>
-        <div style="padding:12px;border-radius:var(--radius-sm);cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toast('Confidentialité — bientôt !')"><span>🔒 Confidentialité</span><span style="color:var(--text3)">›</span></div>
-        <div style="padding:12px;border-radius:var(--radius-sm);cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toast('Thème — bientôt !')"><span>🎨 Thème</span><span style="color:var(--text3)">›</span></div>
+        <div class="settings-row" onclick="openModal('notifSettingsModal')">
+          <span>🔔 Notifications</span>
+          <span id="notifStatusBadge" style="font-size:0.75rem;color:var(--accent);margin-right:4px"></span>
+          <span style="color:var(--text3)">›</span>
+        </div>
+        <div class="settings-row" onclick="openModal('privacySettingsModal')">
+          <span>🔒 Confidentialité</span>
+          <span style="color:var(--text3)">›</span>
+        </div>
+        <div class="settings-row" onclick="openModal('themeSettingsModal')">
+          <span>🎨 Thème & Apparence</span>
+          <span style="color:var(--text3)">›</span>
+        </div>
+        <div class="settings-row" onclick="openModal('storageSettingsModal')">
+          <span>💾 Stockage & Données</span>
+          <span style="color:var(--text3)">›</span>
+        </div>
       </div>
     </div>
     <!-- LOGOUT — bien visible -->
@@ -825,6 +901,290 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
   <button onclick="downloadImg()" style="margin-top:16px;border:none;background:var(--surface);color:var(--text);padding:8px 20px;border-radius:20px;cursor:pointer;font-family:var(--font-body)">⬇ Télécharger</button>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     NOTIFICATIONS SETTINGS
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="notifSettingsModal" onclick="overlayClose(event,'notifSettingsModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-title">🔔 Notifications</span>
+      <button class="modal-close" onclick="closeModal('notifSettingsModal')">✕</button>
+    </div>
+
+    <div class="settings-section-title">Messages</div>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Nouveaux messages</span>
+        <span class="sub">Être notifié à chaque message reçu</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="notifMessages" checked onchange="saveNotifSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Groupes</span>
+        <span class="sub">Notifications des messages de groupe</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="notifGroups" checked onchange="saveNotifSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Statuts</span>
+        <span class="sub">Quand quelqu'un publie un statut</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="notifStatuses" onchange="saveNotifSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+
+    <div class="settings-section-title">Sons & Vibrations</div>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Son de notification</span>
+        <span class="sub">Jouer un son à la réception</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="notifSound" checked onchange="saveNotifSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Vibration</span>
+        <span class="sub">Vibrer à la réception (mobile)</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="notifVibrate" checked onchange="saveNotifSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+
+    <div class="settings-section-title">Aperçu</div>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Afficher le contenu</span>
+        <span class="sub">Voir le texte du message dans la notification</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="notifPreview" checked onchange="saveNotifSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+
+    <button class="btn-primary" style="margin-top:16px" onclick="requestPushPermission()">
+      🔔 Activer les notifications push
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PRIVACY SETTINGS
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="privacySettingsModal" onclick="overlayClose(event,'privacySettingsModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-title">🔒 Confidentialité</span>
+      <button class="modal-close" onclick="closeModal('privacySettingsModal')">✕</button>
+    </div>
+
+    <div class="settings-section-title">Visibilité du profil</div>
+    <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="radio" name="lastSeenPrivacy" value="everyone" checked onchange="savePrivacySettings()" style="accent-color:var(--accent)"/>
+        <div><div style="font-size:0.9rem">Tout le monde</div><div style="font-size:0.75rem;color:var(--text3)">N'importe qui peut voir "vu le..."</div></div>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="radio" name="lastSeenPrivacy" value="contacts" onchange="savePrivacySettings()" style="accent-color:var(--accent)"/>
+        <div><div style="font-size:0.9rem">Mes contacts</div><div style="font-size:0.75rem;color:var(--text3)">Seulement les gens avec qui tu as chatté</div></div>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="radio" name="lastSeenPrivacy" value="nobody" onchange="savePrivacySettings()" style="accent-color:var(--accent)"/>
+        <div><div style="font-size:0.9rem">Personne</div><div style="font-size:0.75rem;color:var(--text3)">Ta dernière connexion reste privée</div></div>
+      </label>
+    </div>
+
+    <div class="settings-section-title">Photo de profil</div>
+    <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="radio" name="photoPrivacy" value="everyone" checked onchange="savePrivacySettings()" style="accent-color:var(--accent)"/>
+        <span style="font-size:0.9rem">Tout le monde</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="radio" name="photoPrivacy" value="nobody" onchange="savePrivacySettings()" style="accent-color:var(--accent)"/>
+        <span style="font-size:0.9rem">Personne</span>
+      </label>
+    </div>
+
+    <div class="settings-section-title">Statuts</div>
+    <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="radio" name="statusPrivacy" value="everyone" checked onchange="savePrivacySettings()" style="accent-color:var(--accent)"/>
+        <span style="font-size:0.9rem">Tout le monde</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="radio" name="statusPrivacy" value="contacts" onchange="savePrivacySettings()" style="accent-color:var(--accent)"/>
+        <span style="font-size:0.9rem">Mes contacts uniquement</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="radio" name="statusPrivacy" value="nobody" onchange="savePrivacySettings()" style="accent-color:var(--accent)"/>
+        <span style="font-size:0.9rem">Personne</span>
+      </label>
+    </div>
+
+    <div class="settings-section-title">Sécurité</div>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Confirmations de lecture</span>
+        <span class="sub">Envoyer les doubles coches bleues ✓✓</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="privacyReadReceipts" checked onchange="savePrivacySettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Indicateur de frappe</span>
+        <span class="sub">Afficher "est en train d'écrire..."</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="privacyTyping" checked onchange="savePrivacySettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     THEME SETTINGS
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="themeSettingsModal" onclick="overlayClose(event,'themeSettingsModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-title">🎨 Thème & Apparence</span>
+      <button class="modal-close" onclick="closeModal('themeSettingsModal')">✕</button>
+    </div>
+
+    <div class="settings-section-title">Couleur d'accent</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 4px">
+      <div class="theme-swatch active" style="background:#00d4aa" onclick="setAccentColor('#00d4aa','#00b894')" id="accent-teal">✓</div>
+      <div class="theme-swatch" style="background:#7c3aed" onclick="setAccentColor('#7c3aed','#6d28d9')" id="accent-purple"></div>
+      <div class="theme-swatch" style="background:#2563eb" onclick="setAccentColor('#2563eb','#1d4ed8')" id="accent-blue"></div>
+      <div class="theme-swatch" style="background:#dc2626" onclick="setAccentColor('#dc2626','#b91c1c')" id="accent-red"></div>
+      <div class="theme-swatch" style="background:#ea580c" onclick="setAccentColor('#ea580c','#c2410c')" id="accent-orange"></div>
+      <div class="theme-swatch" style="background:#ca8a04" onclick="setAccentColor('#ca8a04','#a16207')" id="accent-yellow"></div>
+      <div class="theme-swatch" style="background:#16a34a" onclick="setAccentColor('#16a34a','#15803d')" id="accent-green"></div>
+      <div class="theme-swatch" style="background:#db2777" onclick="setAccentColor('#db2777','#be185d')" id="accent-pink"></div>
+    </div>
+
+    <div class="settings-section-title">Taille du texte</div>
+    <div style="padding:8px 4px">
+      <div class="font-size-demo" id="fontSizeDemo">Aperçu du texte — ZeKChAt</div>
+      <input type="range" min="12" max="20" value="14" id="fontSizeSlider" oninput="applyFontSize(this.value)" style="width:100%;accent-color:var(--accent);margin-top:8px"/>
+      <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text3);margin-top:4px">
+        <span>A</span><span style="font-size:0.9rem">A</span><span style="font-size:1.1rem">A</span>
+      </div>
+    </div>
+
+    <div class="settings-section-title">Fond de conversation</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 4px">
+      <div style="width:56px;height:56px;border-radius:10px;background:var(--bg);border:2px solid var(--accent);cursor:pointer" onclick="setChatWallpaper('none')" title="Aucun"></div>
+      <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#1a1a2e,#16213e);cursor:pointer;border:2px solid transparent" onclick="setChatWallpaper('night')"></div>
+      <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);cursor:pointer;border:2px solid transparent" onclick="setChatWallpaper('ocean')"></div>
+      <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#1b4332,#2d6a4f);cursor:pointer;border:2px solid transparent" onclick="setChatWallpaper('forest')"></div>
+      <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#4a0e8f,#2b0566);cursor:pointer;border:2px solid transparent" onclick="setChatWallpaper('galaxy')"></div>
+    </div>
+
+    <div class="settings-section-title">Style des bulles</div>
+    <div style="display:flex;gap:8px;padding:8px 4px">
+      <div style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--accent);cursor:pointer;text-align:center;font-size:0.82rem" onclick="setBubbleStyle('rounded')" id="bubble-rounded">Arrondi</div>
+      <div style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--border);cursor:pointer;text-align:center;font-size:0.82rem" onclick="setBubbleStyle('sharp')" id="bubble-sharp">Carré</div>
+      <div style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--border);cursor:pointer;text-align:center;font-size:0.82rem" onclick="setBubbleStyle('classic')" id="bubble-classic">Classic</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     STORAGE SETTINGS
+═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="storageSettingsModal" onclick="overlayClose(event,'storageSettingsModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-title">💾 Stockage & Données</span>
+      <button class="modal-close" onclick="closeModal('storageSettingsModal')">✕</button>
+    </div>
+
+    <div class="settings-section-title">Téléchargement automatique</div>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Photos</span>
+        <span class="sub">Télécharger les photos automatiquement</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="autoDownloadPhotos" checked onchange="saveStorageSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Vidéos</span>
+        <span class="sub">Télécharger les vidéos (Wi-Fi uniquement)</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="autoDownloadVideos" onchange="saveStorageSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+    <label class="settings-toggle">
+      <div class="settings-toggle-label">
+        <span>Documents</span>
+        <span class="sub">Télécharger les fichiers automatiquement</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="autoDownloadDocs" onchange="saveStorageSettings()"/>
+        <div class="toggle-track"></div><div class="toggle-thumb"></div>
+      </div>
+    </label>
+
+    <div class="settings-section-title">Cache</div>
+    <div style="padding:12px;background:var(--surface);border-radius:10px;margin:4px 0;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:0.9rem">Cache local</div>
+        <div style="font-size:0.75rem;color:var(--text3);margin-top:2px" id="cacheSizeLabel">Calcul en cours...</div>
+      </div>
+      <button onclick="clearAppCache()" style="padding:8px 14px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;font-family:var(--font-body);font-size:0.82rem;cursor:pointer">Vider</button>
+    </div>
+
+    <div class="settings-section-title">À propos</div>
+    <div style="padding:12px;background:var(--surface);border-radius:10px;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem"><span style="color:var(--text2)">Version</span><span style="font-weight:600">ZeKChAt v5.7</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem"><span style="color:var(--text2)">Backend</span><span style="font-weight:600">Supabase</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem"><span style="color:var(--text2)">Compte</span><span style="font-weight:600;color:var(--accent);overflow:hidden;text-overflow:ellipsis;max-width:160px" id="storageUserEmail"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FORWARD MESSAGE MODAL -->
+<div class="modal-overlay" id="forwardModal" onclick="overlayClose(event,'forwardModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-title">Transférer vers...</span>
+      <button class="modal-close" onclick="closeModal('forwardModal')">✕</button>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.85rem;color:var(--text2);margin-bottom:4px">
+      <span style="color:var(--text3);font-size:0.72rem;display:block;margin-bottom:4px">Message à transférer</span>
+      <span id="forwardMsgPreview" style="color:var(--text)"></span>
+    </div>
+    <div class="forward-modal-list" id="forwardList"></div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toastEl"></div>
 
@@ -848,6 +1208,9 @@ let typingChannel = null;     // channel broadcast typing
 let allChats = [];
 let onlineUsers = new Set();  // user_ids en ligne
 let replyingTo = null; // { id, content, senderName }
+// Map of optimistic message temp IDs → { el, content, timestamp }
+// Used to reconcile or rollback optimistic UI when Realtime fires
+const pendingOptimistic = new Map();
 let ctxMsgEl = null, ctxMsgData = null;
 let pinnedMsgId = null;
 let typingTimeout = null;
@@ -991,6 +1354,7 @@ async function loadProfile() {
   subscribeToPresence();
   subscribeToChatList();
   subscribeToGroupList();
+  loadAppSettings();
 }
 
 function genZekId(username) {
@@ -1106,28 +1470,113 @@ function previewAvatar(input) {
 // ===================================================
 // CHATS
 // ===================================================
+
+// Marquer une conversation comme lue (supprime le badge)
+function markConvAsRead(convId) {
+  if (!convId || !currentUser) return;
+  try {
+    const key = 'zk_last_read_' + currentUser.id;
+    let map = {};
+    try { map = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) {}
+    map[convId] = new Date().toISOString();
+    localStorage.setItem(key, JSON.stringify(map));
+    // Mettre à jour le badge dans la liste sans recharger tout
+    const item = document.querySelector('.chat-item[data-conv-id="' + convId + '"]');
+    if (item) {
+      const badge = item.querySelector('.unread-badge');
+      if (badge) badge.remove();
+      const preview = item.querySelector('.chat-item-preview');
+      if (preview) { preview.style.fontWeight = ''; preview.style.color = ''; }
+      const nameEl = item.querySelector('.chat-item-name');
+      if (nameEl) nameEl.style.fontWeight = '';
+      const timeEl = item.querySelector('.chat-item-time');
+      if (timeEl) { timeEl.style.color = ''; timeEl.style.fontWeight = ''; }
+    }
+  } catch(e) {}
+}
+
 async function loadChats() {
   if (!sb || !currentUser) return;
-  const { data: convs } = await sb.from('conversations')
-    .select(`*, messages(content, created_at, type, sender_id)`)
-    .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
-    .order('updated_at', { ascending: false });
-  if (!convs) return;
 
-  // Batch: récupérer tous les profils des interlocuteurs en une seule requête
-  const otherIds = convs.map(c => c.user1_id === currentUser.id ? c.user2_id : c.user1_id);
+  // 1. Récupérer les conversations SANS la relation messages (évite le bug FK ambiguë)
+  const { data: convs, error: convErr } = await sb
+    .from('conversations')
+    .select('*')
+    .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
+    .order('updated_at', { ascending: false, nullsFirst: false });
+
+  if (convErr) { console.error('loadChats convs error:', convErr); return; }
+  if (!convs?.length) { allChats = []; renderChatList([]); return; }
+
+  // 2. Récupérer tous les profils interlocuteurs en une seule requête
+  const otherIds = convs.map(c =>
+    c.user1_id === currentUser.id ? c.user2_id : c.user1_id
+  );
   const uniqueIds = [...new Set(otherIds)];
-  const { data: profiles } = await sb.from('profiles').select('*').in('user_id', uniqueIds);
+  const { data: profiles } = await sb
+    .from('profiles')
+    .select('*')
+    .in('user_id', uniqueIds);
   const profileMap = {};
   (profiles || []).forEach(p => { profileMap[p.user_id] = p; });
 
+  // 3. Récupérer le dernier message de chaque conversation séparément
+  const convIds = convs.map(c => c.id);
+  // Essayer d'abord avec les colonnes read_at/read_by, fallback sans si erreur colonne
+  let lastMsgs = null;
+  const { data: lm1, error: lmErr1 } = await sb
+    .from('messages')
+    .select('conversation_id, content, created_at, type, sender_id, read_at, read_by')
+    .in('conversation_id', convIds)
+    .order('created_at', { ascending: false });
+  if (lmErr1 && (lmErr1.code === '42703' || lmErr1.message?.includes('column'))) {
+    // Colonnes read_at/read_by absentes → retry sans elles
+    const { data: lm2 } = await sb
+      .from('messages')
+      .select('conversation_id, content, created_at, type, sender_id')
+      .in('conversation_id', convIds)
+      .order('created_at', { ascending: false });
+    lastMsgs = lm2;
+  } else {
+    lastMsgs = lm1;
+  }
+
+  // Garder le dernier message par conversation + compter les non-lus REÇUS par moi
+  // "Non lu" = message reçu (sender != moi) après ma dernière visite de cette conv
+  const lastMsgMap = {};
+  const unreadCountMap = {};
+
+  // Lire les timestamps de dernière lecture depuis localStorage
+  const lastReadKey = 'zk_last_read_' + currentUser.id;
+  let lastReadMap = {};
+  try { lastReadMap = JSON.parse(localStorage.getItem(lastReadKey) || '{}'); } catch(e) {}
+
+  (lastMsgs || []).forEach(m => {
+    if (!lastMsgMap[m.conversation_id]) lastMsgMap[m.conversation_id] = m;
+    // Compter uniquement les messages que J'AI REÇUS (envoyés par quelqu'un d'autre)
+    if (m.sender_id !== currentUser.id) {
+      const lastRead = lastReadMap[m.conversation_id] || '1970-01-01T00:00:00Z';
+      const msgTime = m.created_at || '1970-01-01T00:00:00Z';
+      if (msgTime > lastRead) {
+        unreadCountMap[m.conversation_id] = (unreadCountMap[m.conversation_id] || 0) + 1;
+      }
+    }
+  });
+
+  // 4. Assembler — afficher TOUTES les conversations même sans profil complet
   allChats = convs.map(conv => {
     const otherId = conv.user1_id === currentUser.id ? conv.user2_id : conv.user1_id;
-    const prof = profileMap[otherId];
-    if (!prof) return null;
-    const lastMsg = conv.messages?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-    return { ...conv, otherProfile: prof, lastMsg };
-  }).filter(Boolean);
+    const prof = profileMap[otherId] || {
+      user_id: otherId,
+      username: 'Utilisateur',
+      avatar_emoji: '😊',
+      avatar_url: null,
+      bio: ''
+    };
+    const lastMsg = lastMsgMap[conv.id] || null;
+    const unreadCount = unreadCountMap[conv.id] || 0;
+    return { ...conv, otherProfile: prof, lastMsg, unreadCount };
+  });
 
   renderChatList(allChats);
 }
@@ -1135,7 +1584,7 @@ async function loadChats() {
 function renderChatList(chats) {
   const el = document.getElementById('chatList');
   if (!chats.length) {
-    el.innerHTML = `<div class="empty-state"><div class="icon">💬</div><h3>Aucune conversation</h3><p>Appuyez sur ✏️ pour démarrer</p></div>`;
+    el.innerHTML = '<div class="empty-state"><div class="icon">💬</div><h3>Aucune conversation</h3><p>Appuyez sur ✏️ pour démarrer</p></div>';
     return;
   }
   el.innerHTML = chats.map(c => {
@@ -1143,15 +1592,34 @@ function renderChatList(chats) {
     const name = prof.username || prof.email;
     const last = c.lastMsg ? formatLastMsg(c.lastMsg) : 'Démarrer la conversation';
     const time = c.lastMsg ? formatTime(c.lastMsg.created_at) : '';
-    const avatarContent = prof.avatar_url ? `<img src="${prof.avatar_url}" alt=""/>` : (prof.avatar_emoji || name[0].toUpperCase());
+    const avatarContent = prof.avatar_url ? '<img src="' + prof.avatar_url + '" alt=""/>' : (prof.avatar_emoji || name[0].toUpperCase());
     const isOnline = onlineUsers.has(prof.user_id);
-    return `<div class="chat-item" data-conv-id="${c.id}" onclick="openChat('${c.id}','private','${escHtml(name)}','${escHtml(prof.user_id)}')">
-      <div class="chat-item-avatar">${avatarContent}<div class="online-dot" style="display:${isOnline?'block':'none'}"></div></div>
-      <div class="chat-item-info">
-        <div class="chat-item-top"><span class="chat-item-name">${escHtml(name)}</span><span class="chat-item-time">${time}</span></div>
-        <div class="chat-item-bottom"><span class="chat-item-preview">${escHtml(last)}</span></div>
-      </div>
-    </div>`;
+    const unread = c.unreadCount || 0;
+    const hasUnread = unread > 0;
+
+    // Statut du dernier message (uniquement si c'est moi qui l'ai envoyé)
+    let statusIcon = '';
+    if (c.lastMsg && c.lastMsg.sender_id === currentUser?.id) {
+      const readBy = c.lastMsg.read_by || [];
+      const isRead = Array.isArray(readBy) ? readBy.includes(prof.user_id) : (c.lastMsg.read_at != null);
+      if (isRead) {
+        statusIcon = '<span style="color:#00d4aa;font-size:0.75rem;margin-right:3px">✓✓</span>';
+      } else {
+        statusIcon = '<span style="color:var(--text3);font-size:0.75rem;margin-right:3px">✓✓</span>';
+      }
+    }
+
+    const previewStyle = hasUnread ? 'font-weight:600;color:var(--text)' : '';
+    const nameStyle = hasUnread ? 'font-weight:700' : '';
+    const timeStyle = hasUnread ? 'color:var(--accent);font-weight:600' : '';
+    const badgeHtml = hasUnread ? '<span class="unread-badge">' + (unread > 99 ? '99+' : unread) + '</span>' : '';
+
+    return '<div class="chat-item" data-conv-id="' + c.id + '" onclick="openChat(\'' + c.id + '\',\'private\',\'' + escHtml(name) + '\',\'' + escHtml(prof.user_id) + '\')">'
+      + '<div class="chat-item-avatar">' + avatarContent + '<div class="online-dot" style="display:' + (isOnline ? 'block' : 'none') + '"></div></div>'
+      + '<div class="chat-item-info">'
+      + '<div class="chat-item-top"><span class="chat-item-name" style="' + nameStyle + '">' + escHtml(name) + '</span><span class="chat-item-time" style="' + timeStyle + '">' + time + '</span></div>'
+      + '<div class="chat-item-bottom"><span class="chat-item-preview" style="' + previewStyle + '">' + statusIcon + escHtml(last) + '</span>' + badgeHtml + '</div>'
+      + '</div></div>';
   }).join('');
 }
 
@@ -1518,10 +1986,12 @@ async function postStatus() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Publication...'; }
 
   try {
-    let content = '', type = statusType, media_url = null, bg_color = null;
+    // Lire statusType au moment de la soumission (évite les décalages d'état)
+    const currentType = statusType;
+    let content = '', type = currentType, media_url = null, bg_color = null;
 
-    if (type === 'text') {
-      content = document.getElementById('statusTextInput').value.trim();
+    if (currentType === 'text') {
+      content = (document.getElementById('statusTextInput').value || '').trim();
       if (!content) { toast('Entrez du texte pour votre statut'); resetBtn(); return; }
       bg_color = statusBgColor;
 
@@ -1577,20 +2047,37 @@ async function postStatus() {
       media_url = urlData.publicUrl;
     }
 
-    // Try insert — start with minimal required fields
     const record = { user_id: currentUser.id, content, type, media_url, bg_color };
     const { error: insErr } = await sb.from('statuses').insert(record);
 
     if (insErr) {
       console.error('Status insert error:', insErr);
-      toast('❌ Erreur DB: ' + insErr.message);
-      resetBtn(); return;
+      // Tentative sans les colonnes optionnelles si erreur de colonne inconnue
+      if (insErr.code === '42703' || insErr.message?.includes('column')) {
+        const minimal = { user_id: currentUser.id, content, type };
+        if (media_url) minimal.media_url = media_url;
+        const { error: e2 } = await sb.from('statuses').insert(minimal);
+        if (e2) { toast('❌ Erreur DB: ' + e2.message); resetBtn(); return; }
+      } else {
+        toast('❌ Erreur DB: ' + insErr.message);
+        resetBtn(); return;
+      }
     }
 
+    // ✅ Succès : fermer le modal, réinitialiser, recharger la barre
     closeModal('newStatusModal');
     toast('✅ Statut publié avec succès !');
-    resetStatusModal();
-    loadStatuses();
+    // Réinitialiser APRÈS fermeture du modal pour éviter le flash
+    setTimeout(() => {
+      resetStatusModal();
+      // Forcer le retour au type texte par défaut
+      statusType = 'text';
+      setStatusType('text');
+      statusBgColor = STATUS_COLORS[0];
+      document.querySelectorAll('#statusColorRow .color-swatch').forEach((s,i) => s.classList.toggle('active', i===0));
+    }, 350);
+    // Recharger la barre des statuts
+    await loadStatuses();
 
   } catch(e) {
     console.error('postStatus error:', e);
@@ -1614,6 +2101,15 @@ function resetStatusModal() {
   const photoTxt = document.getElementById('photoTextInput');
   if (photoTxt) photoTxt.value = '';
   statusCanvasCtx = null; statusBaseImage = null; drawMode = false;
+  // Réinitialiser le type et les onglets
+  statusType = 'text';
+  document.getElementById('statusTypeText')?.classList.add('active');
+  document.getElementById('statusTypePhoto')?.classList.remove('active');
+  document.getElementById('statusTextArea').style.display = 'block';
+  document.getElementById('statusPhotoArea').style.display = 'none';
+  // Réinitialiser la couleur de fond
+  statusBgColor = STATUS_COLORS[0];
+  document.querySelectorAll('#statusColorRow .color-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
 }
 
 // STATUS VIEWER
@@ -1680,6 +2176,14 @@ function openChat(id, type, name, otherId) {
   currentChatType = type;
   currentChatName = name;
   currentChatOtherId = otherId;
+
+  // Marquer la conversation comme lue maintenant (efface le badge)
+  markConvAsRead(id);
+
+  // Vider les optimistes du chat précédent
+  pendingOptimistic.clear();
+  // Fermer la recherche si elle était ouverte
+  closeChatSearch();
   document.getElementById('chatHeaderName').textContent = name;
 
   // Statut en ligne basé sur la présence réelle
@@ -1712,6 +2216,9 @@ function closeChat() {
   // Nettoyer toutes les subscriptions du chat
   if (realtimeSub) { sb?.removeChannel(realtimeSub); realtimeSub = null; }
   if (typingChannel) { sb?.removeChannel(typingChannel); typingChannel = null; }
+
+  // Vider les messages optimistes en attente
+  pendingOptimistic.clear();
 
   // Broadcast stop typing avant de fermer
   clearTimeout(typingTimeout);
@@ -1746,16 +2253,44 @@ function openChatInfo() {
 // MESSAGES
 // ===================================================
 async function loadMessages() {
-  document.getElementById('messagesContainer').innerHTML = '';
+  const container = document.getElementById('messagesContainer');
+  container.innerHTML = '';
   if (DEMO_MODE) { renderDemoMessages(); return; }
+
   const table = currentChatType === 'group' ? 'group_messages' : 'messages';
   const idField = currentChatType === 'group' ? 'group_id' : 'conversation_id';
-  const { data } = await sb.from(table)
-    .select('*, profiles(username, avatar_emoji, avatar_url)')
+
+  // 1. Charger les messages SANS join profiles (évite les erreurs FK manquante)
+  const { data: msgs, error } = await sb
+    .from(table)
+    .select('*')
     .eq(idField, currentChatId)
-    .order('created_at', { ascending: true });
-  if (!data) return;
-  renderMessages(data);
+    .order('created_at', { ascending: true })
+    .limit(200);
+
+  if (error) {
+    console.error('loadMessages error:', error);
+    container.innerHTML = `<div style="text-align:center;color:var(--danger);padding:24px;font-size:0.85rem">❌ Erreur chargement: ${error.message}</div>`;
+    return;
+  }
+  if (!msgs?.length) return;
+
+  // 2. Récupérer les profils des expéditeurs séparément
+  const senderIds = [...new Set(msgs.map(m => m.sender_id).filter(Boolean))];
+  const { data: profilesData } = await sb
+    .from('profiles')
+    .select('user_id, username, avatar_emoji, avatar_url')
+    .in('user_id', senderIds);
+  const profileMap = {};
+  (profilesData || []).forEach(p => { profileMap[p.user_id] = p; });
+
+  // 3. Attacher les profils aux messages
+  const enriched = msgs.map(m => ({
+    ...m,
+    profiles: profileMap[m.sender_id] || { username: 'Utilisateur', avatar_emoji: '😊' }
+  }));
+
+  renderMessages(enriched);
 }
 
 function renderDemoMessages() {
@@ -1790,10 +2325,13 @@ function buildBubble(msg, isOut) {
   const name = msg.profiles?.username || '';
   let inner = '';
 
-  // Reply reference
+  // Reply reference — cliquable pour scroller vers le message original
   let replyHtml = '';
   if (msg.reply_to_content) {
-    replyHtml = `<div class="msg-reply-ref"><div class="reply-sender">${escHtml(msg.reply_to_sender||'')}</div><div>${escHtml(msg.reply_to_content)}</div></div>`;
+    replyHtml = `<div class="msg-reply-ref" onclick="scrollToMsg('${escHtml(String(msg.reply_to_id||''))}');event.stopPropagation()">
+      <div class="reply-sender">${escHtml(msg.reply_to_sender||'')}</div>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(msg.reply_to_content)}</div>
+    </div>`;
   }
 
   if (msg.type === 'image') {
@@ -1809,19 +2347,19 @@ function buildBubble(msg, isOut) {
     inner = escHtml(msg.content || '');
   }
 
-  // Reactions
-  let reactHtml = '';
-  if (msg.reactions && msg.reactions.length) {
-    reactHtml = `<div class="msg-reactions">${msg.reactions.map(r=>`<div class="reaction-chip ${r.mine?'mine':''}" onclick="toggleReaction('${msg.id}','${r.emoji}')">${r.emoji} ${r.count>1?r.count:''}</div>`).join('')}</div>`;
-  }
+  // Réactions — utilise les données réelles de la DB
+  const reactHtml = buildReactionsHtml(msg.reactions);
+
+  // Statut envoi : ✓ en attente, ✓✓ confirmé
+  const statusIcon = msg._pending ? '<span class="msg-status" style="color:var(--text3)">✓</span>' : (isOut ? '<span class="msg-status">✓✓</span>' : '');
 
   const pinAttr = pinnedMsgId === msg.id ? ' data-pinned="1"' : '';
-  return `<div class="msg-bubble-wrap ${isOut?'out':'in'}" data-id="${msg.id}" data-content="${escHtml(msg.content||'')}" data-sender="${escHtml(name)}" data-out="${isOut}"${pinAttr}>
+  return `<div class="msg-bubble-wrap ${isOut?'out':'in'}" data-id="${msg.id}" data-content="${escHtml(msg.content||'')}" data-sender="${escHtml(name)}" data-out="${isOut}" data-reply-to-id="${escHtml(String(msg.reply_to_id||''))}"${pinAttr}>
     ${!isOut && currentChatType==='group' ? `<div class="msg-sender-name">${escHtml(name)}</div>` : ''}
     <div class="msg-bubble ${isOut?'out':'in'}">${replyHtml}${inner}</div>
     <div class="msg-meta">
       <span class="msg-time">${time}</span>
-      ${isOut ? '<span class="msg-status">✓✓</span>' : ''}
+      ${statusIcon}
     </div>
     ${reactHtml}
   </div>`;
@@ -1879,8 +2417,49 @@ function ctxCopy() {
 }
 
 function ctxForward() {
+  if (!ctxMsgData) return;
   hideCtxMenu();
-  toast('Transférer — bientôt disponible !');
+  // Pré-remplir le preview
+  document.getElementById('forwardMsgPreview').textContent =
+    ctxMsgData.content?.slice(0, 80) + (ctxMsgData.content?.length > 80 ? '…' : '');
+  // Remplir la liste des conversations disponibles
+  const list = document.getElementById('forwardList');
+  if (!allChats.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text3);padding:16px;font-size:0.85rem">Aucune conversation disponible</div>';
+  } else {
+    list.innerHTML = allChats.map(c => {
+      const prof = c.otherProfile;
+      const name = prof.username || prof.email;
+      const avatarHtml = prof.avatar_url
+        ? `<img src="${escHtml(prof.avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`
+        : (prof.avatar_emoji || name[0]?.toUpperCase() || '?');
+      return `<div class="forward-item" onclick="forwardTo('${escHtml(c.id)}','${escHtml(name)}')">
+        <div class="forward-item-avatar">${avatarHtml}</div>
+        <div>
+          <div class="forward-item-name">${escHtml(name)}</div>
+          <div class="forward-item-sub">${escHtml(genZekId(name))}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  openModal('forwardModal');
+}
+
+async function forwardTo(convId, toName) {
+  closeModal('forwardModal');
+  if (!ctxMsgData?.content) return;
+  if (DEMO_MODE) { toast('Mode démo'); return; }
+
+  const content = `↗ Transféré :\n${ctxMsgData.content}`;
+  const { error } = await sb.from('messages').insert({
+    conversation_id: convId,
+    sender_id: currentUser.id,
+    content,
+    type: 'text'
+  });
+  if (error) { toast('❌ Erreur transfert: ' + error.message); return; }
+  await sb.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', convId);
+  toast(`✅ Transféré à ${toName}`);
 }
 
 function ctxPin() {
@@ -1940,30 +2519,83 @@ function showQuickReactPicker(el, data) {
   document.addEventListener('click', () => picker.style.display='none', { once:true });
 }
 
-function addReaction(msgId, emoji) {
-  if (!msgId) return;
+// ── RÉACTIONS PERSISTANTES EN DB ──────────────────────────────────────────
+async function addReaction(msgId, emoji) {
+  if (!msgId || String(msgId).startsWith('opt-')) return;
+
   const wrap = document.querySelector(`.msg-bubble-wrap[data-id="${msgId}"]`);
-  if (!wrap) { toast(emoji + ' Réaction ajoutée'); return; }
+  if (!wrap) return;
+
+  // Mise à jour optimiste de l'UI immédiatement
+  _applyReactionUI(wrap, emoji, true);
+
+  if (DEMO_MODE || !sb) return;
+
+  // Sauvegarde en DB dans la table message_reactions
+  const table = currentChatType === 'group' ? 'group_messages' : 'messages';
+  const idField = currentChatType === 'group' ? 'group_id' : 'conversation_id';
+
+  // Lire les réactions actuelles du message
+  const { data: msg } = await sb.from(table).select('reactions').eq('id', msgId).single();
+  let reactions = (msg?.reactions) || [];
+
+  const myEntry = reactions.find(r => r.emoji === emoji && r.user_id === currentUser.id);
+  if (myEntry) {
+    // Toggle off
+    reactions = reactions.filter(r => !(r.emoji === emoji && r.user_id === currentUser.id));
+    _applyReactionUI(wrap, emoji, false);
+    toast('Réaction retirée');
+  } else {
+    reactions.push({ emoji, user_id: currentUser.id });
+    toast(emoji);
+  }
+
+  await sb.from(table).update({ reactions }).eq('id', msgId);
+}
+
+function _applyReactionUI(wrap, emoji, adding) {
   let reactDiv = wrap.querySelector('.msg-reactions');
   if (!reactDiv) {
     reactDiv = document.createElement('div');
     reactDiv.className = 'msg-reactions';
     wrap.appendChild(reactDiv);
   }
-  // Check if emoji already exists
-  const existing = reactDiv.querySelector(`.reaction-chip[data-em="${emoji}"]`);
+  const existing = reactDiv.querySelector(`.reaction-chip[data-em="${CSS.escape(emoji)}"]`);
   if (existing) {
-    existing.classList.toggle('mine');
-    toast(existing.classList.contains('mine') ? emoji + ' Réaction ajoutée' : 'Réaction retirée');
-  } else {
+    const countEl = existing.querySelector('.r-count');
+    let count = parseInt(countEl?.textContent || '1');
+    if (adding) {
+      count++;
+      existing.classList.add('mine');
+    } else {
+      count--;
+      existing.classList.remove('mine');
+      if (count <= 0) { existing.remove(); return; }
+    }
+    if (countEl) countEl.textContent = count > 1 ? count : '';
+  } else if (adding) {
     const chip = document.createElement('div');
     chip.className = 'reaction-chip mine';
     chip.dataset.em = emoji;
-    chip.textContent = emoji;
-    chip.onclick = () => { chip.classList.toggle('mine'); };
+    chip.innerHTML = `${emoji}<span class="r-count"></span>`;
+    chip.onclick = () => addReaction(wrap.dataset.id, emoji);
     reactDiv.appendChild(chip);
-    toast(emoji);
   }
+}
+
+function buildReactionsHtml(reactions) {
+  if (!reactions?.length) return '';
+  // Agréger par emoji
+  const map = {};
+  reactions.forEach(r => {
+    if (!map[r.emoji]) map[r.emoji] = { count: 0, mine: false };
+    map[r.emoji].count++;
+    if (r.user_id === currentUser?.id) map[r.emoji].mine = true;
+  });
+  const chips = Object.entries(map).map(([emoji, { count, mine }]) =>
+    `<div class="reaction-chip ${mine ? 'mine' : ''}" data-em="${escHtml(emoji)}" onclick="addReaction(this.closest('.msg-bubble-wrap').dataset.id,'${escHtml(emoji)}')">${emoji}<span class="r-count">${count > 1 ? count : ''}</span></div>`
+  ).join('');
+  return `<div class="msg-reactions">${chips}</div>`;
 }
 
 function toggleReaction(msgId, emoji) {
@@ -1974,9 +2606,96 @@ function scrollToPinned() {
   const el = document.querySelector(`[data-id="${pinnedMsgId}"]`);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+
+function scrollToMsg(msgId) {
+  if (!msgId) return;
+  const el = document.querySelector(`.msg-bubble-wrap[data-id="${msgId}"]`);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Flash highlight
+    el.classList.add('msg-highlight');
+    setTimeout(() => el.classList.remove('msg-highlight'), 1400);
+  }
+}
 function hidePinnedBanner() {
   document.getElementById('pinnedBanner').classList.add('hidden');
   pinnedMsgId = null;
+}
+
+// ── RECHERCHE DANS LES MESSAGES ───────────────────────────────────────────
+let chatSearchResults = [];
+let chatSearchIdx = 0;
+
+function toggleChatSearch() {
+  const bar = document.getElementById('chatSearchBar');
+  const isOpen = bar.classList.contains('show');
+  if (isOpen) {
+    closeChatSearch();
+  } else {
+    bar.classList.add('show');
+    document.getElementById('chatSearchInput').focus();
+  }
+}
+
+function closeChatSearch() {
+  document.getElementById('chatSearchBar').classList.remove('show');
+  document.getElementById('chatSearchInput').value = '';
+  document.getElementById('chatSearchCount').textContent = '';
+  // Enlever tous les highlights
+  document.querySelectorAll('.msg-bubble-wrap.msg-search-hl').forEach(el => {
+    el.classList.remove('msg-search-hl', 'msg-highlight');
+  });
+  chatSearchResults = [];
+  chatSearchIdx = 0;
+}
+
+function searchInChat() {
+  const q = document.getElementById('chatSearchInput').value.trim().toLowerCase();
+  const countEl = document.getElementById('chatSearchCount');
+
+  // Reset highlights
+  document.querySelectorAll('.msg-bubble-wrap.msg-search-hl').forEach(el => {
+    el.classList.remove('msg-search-hl', 'msg-highlight');
+  });
+  chatSearchResults = [];
+  chatSearchIdx = 0;
+
+  if (!q) { countEl.textContent = ''; return; }
+
+  // Trouver tous les messages qui contiennent la query
+  document.querySelectorAll('.msg-bubble-wrap').forEach(wrap => {
+    const content = (wrap.dataset.content || '').toLowerCase();
+    if (content.includes(q)) {
+      chatSearchResults.push(wrap);
+      wrap.classList.add('msg-search-hl');
+    }
+  });
+
+  if (!chatSearchResults.length) {
+    countEl.textContent = '0 / 0';
+    return;
+  }
+
+  chatSearchIdx = chatSearchResults.length - 1; // Commencer par le plus récent
+  _highlightChatSearchCurrent();
+}
+
+function navChatSearch(dir) {
+  if (!chatSearchResults.length) return;
+  chatSearchIdx = (chatSearchIdx + dir + chatSearchResults.length) % chatSearchResults.length;
+  _highlightChatSearchCurrent();
+}
+
+function _highlightChatSearchCurrent() {
+  const countEl = document.getElementById('chatSearchCount');
+  // Retirer le highlight fort de tous
+  chatSearchResults.forEach(el => el.classList.remove('msg-highlight'));
+  const current = chatSearchResults[chatSearchIdx];
+  if (current) {
+    current.classList.add('msg-highlight');
+    current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  countEl.textContent = `${chatSearchIdx + 1} / ${chatSearchResults.length}`;
 }
 
 // ===================================================
@@ -2043,7 +2762,24 @@ function subscribeToChatList() {
   if (chatListSub) { sb.removeChannel(chatListSub); chatListSub = null; }
 
   chatListSub = sb.channel('chat-list-' + currentUser.id)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' },
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' },
+      async (payload) => {
+        const msg = payload.new;
+        // Si message reçu d'un autre et qu'on n'est pas dans ce chat → notif push
+        if (msg && msg.sender_id !== currentUser.id && msg.conversation_id !== currentChatId) {
+          await loadChats();
+          // Récupérer le nom de l'expéditeur pour la notif
+          const conv = allChats.find(c => c.id === msg.conversation_id);
+          const senderName = conv ? (conv.otherProfile?.username || 'Quelqu\'un') : 'Quelqu\'un';
+          const preview = msg.type === 'image' ? '📷 Photo' : msg.type === 'audio' ? '🎙️ Vocal' : (msg.content || 'Nouveau message');
+          sendPushNotif('ZeKChAt — ' + senderName, preview, 'msg-' + msg.conversation_id);
+          playNotifSound();
+        } else {
+          loadChats();
+        }
+      }
+    )
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' },
       () => { loadChats(); }
     )
     .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations',
@@ -2085,36 +2821,78 @@ function subscribeToMessages() {
   const table = currentChatType === 'group' ? 'group_messages' : 'messages';
   const idField = currentChatType === 'group' ? 'group_id' : 'conversation_id';
 
-  // — Subscription aux nouveaux messages —
-  realtimeSub = sb.channel('msgs-' + currentChatId)
+  // Canal unique pour INSERT + UPDATE
+  realtimeSub = sb.channel('msgs-' + currentChatId + '-' + Date.now())
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table, filter: `${idField}=eq.${currentChatId}` },
       async (payload) => {
-        // Ne pas afficher en double si c'est nous qui avons envoyé (déjà affiché optimistement)
-        if (payload.new.sender_id === currentUser.id) return;
-        const { data: msg } = await sb.from(table)
-          .select('*, profiles(username, avatar_emoji, avatar_url)')
-          .eq('id', payload.new.id).single();
-        if (msg) {
-          appendMessage(msg);
-          // Masquer l'indicateur de frappe dès qu'un message arrive
-          hideTypingIndicator();
+        const newMsg = payload.new;
+        const isOwnMessage = newMsg.sender_id === currentUser.id;
+
+        if (isOwnMessage) {
+          // Chercher un optimiste correspondant (même contenu, < 15s)
+          let matchedKey = null;
+          for (const [optId, meta] of pendingOptimistic.entries()) {
+            if (Date.now() - meta.timestamp < 15000 && meta.content === newMsg.content) {
+              matchedKey = optId;
+              break;
+            }
+          }
+          if (matchedKey) {
+            // ✅ Confirmer l'optimiste : mettre à jour son data-id et son statut
+            const meta = pendingOptimistic.get(matchedKey);
+            pendingOptimistic.delete(matchedKey);
+            if (meta.el) {
+              meta.el.dataset.id = newMsg.id;
+              const statusEl = meta.el.querySelector('.msg-status');
+              if (statusEl) { statusEl.textContent = '✓✓'; statusEl.style.color = ''; }
+              meta.el.style.opacity = '';
+            }
+          } else {
+            // Envoyé depuis un autre appareil → afficher normalement
+            await _appendMsgFromDB(table, newMsg.id);
+          }
+          // Dans tous les cas, mettre à jour la liste de chats
+          loadChats();
+          return;
         }
+
+        // ✅ Message reçu d'un autre utilisateur — toujours afficher
+        await _appendMsgFromDB(table, newMsg.id);
+        hideTypingIndicator();
+        playNotifSound();
+        loadChats(); // mettre à jour le preview dans la liste
+        // 🔔 Notification push (même si l'app est en arrière-plan)
+        const senderName = newMsg.sender_name || currentChatName || 'Nouveau message';
+        const preview = newMsg.type === 'image' ? '📷 Photo' : newMsg.type === 'audio' ? '🎙️ Vocal' : (newMsg.content || 'Nouveau message');
+        sendPushNotif('ZeKChAt — ' + senderName, preview, 'msg-' + (newMsg.conversation_id || newMsg.group_id));
       }
     )
     .on('postgres_changes',
       { event: 'UPDATE', schema: 'public', table, filter: `${idField}=eq.${currentChatId}` },
       (payload) => {
-        // Mise à jour en temps réel (suppression, réaction…)
         const wrap = document.querySelector(`.msg-bubble-wrap[data-id="${payload.new.id}"]`);
-        if (wrap && payload.new.deleted) {
+        if (!wrap) return;
+        if (payload.new.deleted) {
           wrap.querySelector('.msg-bubble').innerHTML = '<span style="color:var(--text3);font-style:italic">Message supprimé</span>';
+        }
+        if (payload.new.reactions !== undefined) {
+          let reactDiv = wrap.querySelector('.msg-reactions');
+          if (reactDiv) reactDiv.remove();
+          const newHtml = buildReactionsHtml(payload.new.reactions);
+          if (newHtml) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = newHtml;
+            wrap.appendChild(tmp.firstChild);
+          }
         }
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      console.log('Realtime messages status:', status);
+    });
 
-  // — Channel broadcast pour le typing indicator —
+  // Channel broadcast pour le typing indicator
   typingChannel = sb.channel('typing-' + currentChatId)
     .on('broadcast', { event: 'typing' }, ({ payload }) => {
       if (payload.user_id === currentUser.id) return;
@@ -2127,6 +2905,20 @@ function subscribeToMessages() {
       hideTypingIndicator();
     })
     .subscribe();
+}
+
+// Helper : récupère un message depuis la DB et l'affiche
+async function _appendMsgFromDB(table, msgId) {
+  // Récupérer le message seul
+  const { data: msg, error } = await sb.from(table).select('*').eq('id', msgId).single();
+  if (error || !msg) return;
+  // Récupérer le profil séparément
+  const { data: prof } = await sb.from('profiles')
+    .select('user_id, username, avatar_emoji, avatar_url')
+    .eq('user_id', msg.sender_id)
+    .single();
+  msg.profiles = prof || { username: 'Utilisateur', avatar_emoji: '😊' };
+  appendMessage(msg);
 }
 
 function appendMessage(msg) {
@@ -2147,90 +2939,99 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text && !pendingFile) return;
 
-  // Stop typing broadcast
-  clearTimeout(typingTimeout);
-  clearTimeout(typingBroadcastTimeout);
-  typingBroadcastTimeout = null;
-  if (typingChannel && !DEMO_MODE) {
-    typingChannel.send({ type: 'broadcast', event: 'stop_typing', payload: { user_id: currentUser.id } });
-  }
-
-  // Demo mode — append locally
+  // Demo mode
   if (DEMO_MODE) {
-    const fake = {
-      id: Date.now(), content: text || '📎 Fichier', type: 'text', sender_id: 'me',
-      created_at: new Date().toISOString(), profiles: { username: 'Moi' }
-    };
+    const fake = { id: Date.now(), content: text || '📎 Fichier', type: 'text', sender_id: 'me', created_at: new Date().toISOString(), profiles: { username: 'Moi' } };
     input.value = ''; input.style.height = ''; hideSendBtn(); cancelReply();
     appendMessage(fake);
     return;
   }
 
-  // Affichage optimiste immédiat (avant confirmation serveur) — texte seulement
-  if (text && !pendingFile) {
-    const optimistic = {
-      id: 'opt-' + Date.now(), content: text, type: 'text', sender_id: currentUser.id,
-      created_at: new Date().toISOString(),
-      profiles: { username: currentProfile?.username || '' },
-      reply_to_content: replyingTo?.content || null,
-      reply_to_sender: replyingTo?.senderName || null
-    };
-    // Vider l'input immédiatement
-    const savedReply = replyingTo ? { ...replyingTo } : null;
-    input.value = ''; input.style.height = ''; hideSendBtn(); cancelReply();
-    appendMessage(optimistic);
-    // Restore reply ref for payload
-    replyingTo = savedReply;
-  }
+  // Stop typing broadcast
+  clearTimeout(typingTimeout); clearTimeout(typingBroadcastTimeout); typingBroadcastTimeout = null;
+  if (typingChannel) typingChannel.send({ type: 'broadcast', event: 'stop_typing', payload: { user_id: currentUser.id } });
 
-  // Disable send button during send
   const sendBtn = document.getElementById('sendBtn');
   if (sendBtn) sendBtn.disabled = true;
 
+  // ── CAS FICHIER ──────────────────────────────────────────────────────────
+  if (pendingFile) {
+    input.value = ''; input.style.height = ''; hideSendBtn(); cancelReply();
+    await uploadAndSendFile();
+    if (sendBtn) sendBtn.disabled = false;
+    return;
+  }
+
+  // ── CAS TEXTE ────────────────────────────────────────────────────────────
+  const savedReply = replyingTo ? { ...replyingTo } : null;
+
+  // 1. Affichage optimiste
+  const optimisticId = 'opt-' + Date.now();
+  const optimistic = {
+    id: optimisticId, content: text, type: 'text', sender_id: currentUser.id,
+    created_at: new Date().toISOString(),
+    profiles: { username: currentProfile?.username || '' },
+    reply_to_content: savedReply?.content || null,
+    reply_to_sender: savedReply?.senderName || null,
+    _pending: true
+  };
+  input.value = ''; input.style.height = ''; hideSendBtn(); cancelReply();
+  appendMessage(optimistic);
+  const optimisticEl = document.querySelector(`.msg-bubble-wrap[data-id="${optimisticId}"]`);
+  if (optimisticEl) {
+    optimisticEl.style.opacity = '0.6';
+    pendingOptimistic.set(optimisticId, { el: optimisticEl, content: text, timestamp: Date.now() });
+  }
+
+  // 2. Insert en DB
   try {
-    if (pendingFile) {
-      await uploadAndSendFile();
-      input.value = ''; input.style.height = ''; hideSendBtn(); cancelReply();
-    } else {
-      const table = currentChatType === 'group' ? 'group_messages' : 'messages';
-      const idField = currentChatType === 'group' ? 'group_id' : 'conversation_id';
-
-      // Build payload — on retire les champs qui peuvent ne pas exister en DB
-      const payload = {
-        [idField]: currentChatId,
-        sender_id: currentUser.id,
-        content: text,
-      };
-      // Ajouter type seulement si la colonne existe (on tente, on retombe sans si erreur 42703)
-      payload.type = 'text';
-      if (replyingTo?.id) {
-        payload.reply_to_id = replyingTo.id;
-        payload.reply_to_content = replyingTo.content;
-        payload.reply_to_sender = replyingTo.senderName;
-      }
-
-      let { error } = await sb.from(table).insert(payload);
-      if (error && (error.code === '42703' || error.message?.includes('column'))) {
-        // Colonnes manquantes → réessai avec le minimum vital
-        const minimal = { [idField]: currentChatId, sender_id: currentUser.id, content: text };
-        const { error: e2 } = await sb.from(table).insert(minimal);
-        if (e2) { toast('Erreur envoi: ' + e2.message); return; }
-        error = null;
-      } else if (error) {
-        toast('Erreur envoi: ' + error.message);
-        return;
-      }
-      // Clear reply now that message is sent
-      replyingTo = null;
-
-      // Update conversation timestamp
-      if (currentChatType === 'private') {
-        await sb.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', currentChatId);
-      }
+    const table   = currentChatType === 'group' ? 'group_messages' : 'messages';
+    const idField = currentChatType === 'group' ? 'group_id' : 'conversation_id';
+    const payload = { [idField]: currentChatId, sender_id: currentUser.id, content: text, type: 'text' };
+    if (savedReply?.id) {
+      payload.reply_to_id      = savedReply.id;
+      payload.reply_to_content = savedReply.content;
+      payload.reply_to_sender  = savedReply.senderName;
     }
-  } catch(e) {
-    toast('Erreur: ' + e.message);
-    console.error('sendMessage error:', e);
+
+    let { data: inserted, error } = await sb.from(table).insert(payload).select('id').single();
+
+    // Fallback si colonne type/reply_to_* manquante
+    if (error && (error.code === '42703' || error.message?.includes('column'))) {
+      const minimal = { [idField]: currentChatId, sender_id: currentUser.id, content: text };
+      const res = await sb.from(table).insert(minimal).select('id').single();
+      error = res.error; inserted = res.data;
+    }
+
+    if (error) {
+      // Rollback
+      if (optimisticEl) optimisticEl.remove();
+      pendingOptimistic.delete(optimisticId);
+      input.value = text; if (savedReply) replyingTo = savedReply;
+      toast('❌ ' + error.message);
+      return;
+    }
+
+    // 3. Confirmer l'optimiste IMMÉDIATEMENT
+    if (inserted?.id && optimisticEl) {
+      optimisticEl.dataset.id = inserted.id;
+      optimisticEl.style.opacity = '';
+      const st = optimisticEl.querySelector('.msg-status');
+      if (st) { st.textContent = '✓✓'; st.style.color = ''; }
+      pendingOptimistic.delete(optimisticId);
+    }
+
+    // 4. Bump conversation
+    if (currentChatType === 'private') {
+      sb.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', currentChatId).then();
+    }
+
+  } catch (e) {
+    if (optimisticEl) optimisticEl.remove();
+    pendingOptimistic.delete(optimisticId);
+    input.value = text;
+    toast('❌ ' + e.message);
+    console.error('sendMessage:', e);
   } finally {
     if (sendBtn) sendBtn.disabled = false;
   }
@@ -2238,25 +3039,330 @@ async function sendMessage() {
 
 async function uploadAndSendFile() {
   if (!pendingFile) return;
-  toast('⏳ Envoi du fichier...');
-  const path = `messages/${currentUser.id}/${Date.now()}_${pendingFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-  const { error: upErr } = await sb.storage.from('media').upload(path, pendingFile);
-  if (upErr) { toast('❌ Upload échoué: ' + upErr.message); return; }
-  const { data: urlData } = sb.storage.from('media').getPublicUrl(path);
-  const table = currentChatType === 'group' ? 'group_messages' : 'messages';
+
+  const file = pendingFile;
+  const table   = currentChatType === 'group' ? 'group_messages' : 'messages';
   const idField = currentChatType === 'group' ? 'group_id' : 'conversation_id';
-  const isImage = pendingFile.type.startsWith('image/');
-  const isAudio = pendingFile.type.startsWith('audio/');
-  const { error: dbErr } = await sb.from(table).insert({
-    [idField]: currentChatId, sender_id: currentUser.id,
-    content: urlData.publicUrl, media_url: urlData.publicUrl,
-    type: isImage ? 'image' : isAudio ? 'audio' : 'file',
-    file_name: pendingFile.name, file_size: formatSize(pendingFile.size)
-  });
-  if (dbErr) { toast('❌ Erreur DB: ' + dbErr.message); return; }
+
+  // Détecter le type
+  const isImage = file.type.startsWith('image/');
+  const isAudio = file.type.startsWith('audio/');
+  const isVideo = file.type.startsWith('video/');
+  const msgType = isImage ? 'image' : isAudio ? 'audio' : isVideo ? 'video' : 'file';
+
+  // Affichage optimiste pour le fichier
+  const optId = 'opt-file-' + Date.now();
+  const optMsg = {
+    id: optId,
+    content: isImage ? URL.createObjectURL(file) : file.name,
+    type: msgType,
+    sender_id: currentUser.id,
+    created_at: new Date().toISOString(),
+    profiles: { username: currentProfile?.username || '' },
+    media_url: isImage ? URL.createObjectURL(file) : null,
+    file_name: file.name,
+    file_size: formatSize(file.size),
+    _pending: true
+  };
   clearFilePreview();
-  toast('✅ Fichier envoyé !');
+  appendMessage(optMsg);
+  const optEl = document.querySelector(`.msg-bubble-wrap[data-id="${optId}"]`);
+  if (optEl) optEl.style.opacity = '0.6';
+
+  try {
+    // Upload Storage
+    const ext  = file.name.split('.').pop() || 'bin';
+    const path = `messages/${currentUser.id}/${Date.now()}.${ext}`;
+    toast('⏳ Upload en cours...');
+
+    const { error: upErr } = await sb.storage.from('media').upload(path, file, {
+      contentType: file.type || 'application/octet-stream',
+      upsert: false
+    });
+    if (upErr) {
+      if (optEl) optEl.remove();
+      toast('❌ Upload échoué: ' + upErr.message);
+      return;
+    }
+
+    const { data: urlData } = sb.storage.from('media').getPublicUrl(path);
+    const publicUrl = urlData.publicUrl;
+
+    // Insert DB — essai complet d'abord
+    let payload = {
+      [idField]: currentChatId,
+      sender_id: currentUser.id,
+      content:   publicUrl,
+      media_url: publicUrl,
+      type:      msgType,
+      file_name: file.name,
+      file_size: formatSize(file.size)
+    };
+    let { data: inserted, error: dbErr } = await sb.from(table).insert(payload).select('id').single();
+
+    // Fallback colonnes manquantes
+    if (dbErr && (dbErr.code === '42703' || dbErr.message?.includes('column'))) {
+      const minimal = { [idField]: currentChatId, sender_id: currentUser.id, content: publicUrl };
+      const res = await sb.from(table).insert(minimal).select('id').single();
+      dbErr = res.error; inserted = res.data;
+    }
+
+    if (dbErr) {
+      if (optEl) optEl.remove();
+      toast('❌ Erreur DB: ' + dbErr.message);
+      return;
+    }
+
+    // Confirmer l'optimiste fichier
+    if (inserted?.id && optEl) {
+      optEl.dataset.id = inserted.id;
+      optEl.style.opacity = '';
+      const st = optEl.querySelector('.msg-status');
+      if (st) { st.textContent = '✓✓'; st.style.color = ''; }
+    }
+
+    if (currentChatType === 'private') {
+      sb.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', currentChatId).then();
+    }
+    toast('✅ Fichier envoyé !');
+
+  } catch (e) {
+    if (optEl) optEl.remove();
+    toast('❌ ' + e.message);
+    console.error('uploadAndSendFile:', e);
+  }
 }
+
+// ===================================================
+// SETTINGS — NOTIFICATIONS
+// ===================================================
+let appSettings = {};
+
+function loadAppSettings() {
+  try {
+    appSettings = JSON.parse(localStorage.getItem('zk_settings') || '{}');
+  } catch { appSettings = {}; }
+
+  // Notifications
+  setChk('notifMessages',  appSettings.notifMessages  !== false);
+  setChk('notifGroups',    appSettings.notifGroups    !== false);
+  setChk('notifStatuses',  appSettings.notifStatuses  === true);
+  setChk('notifSound',     appSettings.notifSound     !== false);
+  setChk('notifVibrate',   appSettings.notifVibrate   !== false);
+  setChk('notifPreview',   appSettings.notifPreview   !== false);
+
+  // Privacy
+  setRadio('lastSeenPrivacy', appSettings.lastSeenPrivacy || 'everyone');
+  setRadio('photoPrivacy',    appSettings.photoPrivacy    || 'everyone');
+  setRadio('statusPrivacy',   appSettings.statusPrivacy   || 'everyone');
+  setChk('privacyReadReceipts', appSettings.privacyReadReceipts !== false);
+  setChk('privacyTyping',       appSettings.privacyTyping       !== false);
+
+  // Storage
+  setChk('autoDownloadPhotos', appSettings.autoDownloadPhotos !== false);
+  setChk('autoDownloadVideos', appSettings.autoDownloadVideos === true);
+  setChk('autoDownloadDocs',   appSettings.autoDownloadDocs   === true);
+
+  // Theme
+  if (appSettings.accentColor) applyAccentColorOnly(appSettings.accentColor, appSettings.accentColor2);
+  if (appSettings.fontSize)    applyFontSize(appSettings.fontSize, false);
+  if (appSettings.chatWallpaper) applyWallpaper(appSettings.chatWallpaper);
+  if (appSettings.bubbleStyle)   applyBubbleStyleOnly(appSettings.bubbleStyle);
+
+  // Badge notif
+  updateNotifBadge();
+
+  // Storage info
+  const emailEl = document.getElementById('storageUserEmail');
+  if (emailEl && currentUser) emailEl.textContent = currentUser.email;
+  estimateCacheSize();
+}
+
+function setChk(id, val) { const el = document.getElementById(id); if (el) el.checked = val; }
+function setRadio(name, val) {
+  document.querySelectorAll(`input[name="${name}"]`).forEach(r => { r.checked = r.value === val; });
+}
+function saveSettings() { localStorage.setItem('zk_settings', JSON.stringify(appSettings)); }
+
+function saveNotifSettings() {
+  appSettings.notifMessages  = document.getElementById('notifMessages')?.checked;
+  appSettings.notifGroups    = document.getElementById('notifGroups')?.checked;
+  appSettings.notifStatuses  = document.getElementById('notifStatuses')?.checked;
+  appSettings.notifSound     = document.getElementById('notifSound')?.checked;
+  appSettings.notifVibrate   = document.getElementById('notifVibrate')?.checked;
+  appSettings.notifPreview   = document.getElementById('notifPreview')?.checked;
+  saveSettings();
+  updateNotifBadge();
+  toast('✅ Notifications sauvegardées');
+}
+
+function updateNotifBadge() {
+  const badge = document.getElementById('notifStatusBadge');
+  if (!badge) return;
+  const allOff = !appSettings.notifMessages && !appSettings.notifGroups;
+  badge.textContent = allOff ? 'Désactivées' : '';
+}
+
+async function requestPushPermission() {
+  if (typeof Notification === 'undefined' || !('Notification' in window)) {
+    toast('❌ Notifications non supportées dans ce contexte');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    toast('✅ Notifications push activées !');
+    try { new Notification('ZeKChAt', { body: 'Les notifications sont activées 🎉' }); } catch(e) {}
+  } else {
+    toast('❌ Permission refusée — active-les dans les paramètres du navigateur');
+  }
+}
+
+// Jouer un son à la réception d'un message
+function playNotifSound() {
+  if (!appSettings.notifSound) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(); osc.stop(ctx.currentTime + 0.3);
+  } catch {}
+}
+
+// ===================================================
+// SETTINGS — PRIVACY
+// ===================================================
+function savePrivacySettings() {
+  appSettings.lastSeenPrivacy    = getRadio('lastSeenPrivacy');
+  appSettings.photoPrivacy       = getRadio('photoPrivacy');
+  appSettings.statusPrivacy      = getRadio('statusPrivacy');
+  appSettings.privacyReadReceipts = document.getElementById('privacyReadReceipts')?.checked;
+  appSettings.privacyTyping       = document.getElementById('privacyTyping')?.checked;
+  saveSettings();
+  // Sauvegarder aussi en DB si connecté
+  if (sb && currentUser && !DEMO_MODE) {
+    sb.from('profiles').update({
+      last_seen_privacy: appSettings.lastSeenPrivacy,
+      photo_privacy:     appSettings.photoPrivacy,
+      status_privacy:    appSettings.statusPrivacy
+    }).eq('user_id', currentUser.id).then();
+  }
+  toast('✅ Confidentialité sauvegardée');
+}
+
+function getRadio(name) {
+  const checked = document.querySelector(`input[name="${name}"]:checked`);
+  return checked ? checked.value : 'everyone';
+}
+
+// ===================================================
+// SETTINGS — THEME
+// ===================================================
+function setAccentColor(color, color2) {
+  applyAccentColorOnly(color, color2 || color);
+  appSettings.accentColor  = color;
+  appSettings.accentColor2 = color2 || color;
+  saveSettings();
+  toast('🎨 Couleur appliquée');
+}
+
+function applyAccentColorOnly(color, color2) {
+  document.documentElement.style.setProperty('--accent', color);
+  document.documentElement.style.setProperty('--accent2', color2 || color);
+  // Mise à jour des swatches actifs
+  document.querySelectorAll('.theme-swatch').forEach(s => {
+    s.classList.remove('active'); s.textContent = '';
+  });
+  // Trouver le swatch correspondant
+  document.querySelectorAll('.theme-swatch').forEach(s => {
+    if (s.style.background === color || s.getAttribute('onclick')?.includes(color)) {
+      s.classList.add('active'); s.textContent = '✓';
+    }
+  });
+}
+
+function applyFontSize(size, save = true) {
+  document.documentElement.style.setProperty('--base-font-size', size + 'px');
+  document.body.style.fontSize = size + 'px';
+  const demo = document.getElementById('fontSizeDemo');
+  if (demo) demo.style.fontSize = size + 'px';
+  const slider = document.getElementById('fontSizeSlider');
+  if (slider) slider.value = size;
+  if (save) { appSettings.fontSize = parseInt(size); saveSettings(); }
+}
+
+function setChatWallpaper(type) {
+  applyWallpaper(type);
+  appSettings.chatWallpaper = type;
+  saveSettings();
+  toast('🖼️ Fond appliqué');
+}
+
+function applyWallpaper(type) {
+  const container = document.getElementById('messagesContainer');
+  if (!container) return;
+  const wallpapers = {
+    none:   '',
+    night:  'linear-gradient(135deg,#1a1a2e,#16213e)',
+    ocean:  'linear-gradient(135deg,#0f2027,#203a43,#2c5364)',
+    forest: 'linear-gradient(135deg,#1b4332,#2d6a4f)',
+    galaxy: 'linear-gradient(135deg,#4a0e8f,#2b0566)'
+  };
+  container.style.background = wallpapers[type] || '';
+}
+
+function setBubbleStyle(style) {
+  applyBubbleStyleOnly(style);
+  appSettings.bubbleStyle = style;
+  saveSettings();
+  toast('💬 Style appliqué');
+}
+
+function applyBubbleStyleOnly(style) {
+  document.querySelectorAll('[id^="bubble-"]').forEach(el => {
+    el.style.borderColor = 'var(--border)';
+  });
+  const active = document.getElementById('bubble-' + style);
+  if (active) active.style.borderColor = 'var(--accent)';
+  const radii = { rounded: '18px', sharp: '4px', classic: '10px' };
+  document.documentElement.style.setProperty('--bubble-radius', radii[style] || '18px');
+}
+
+// ===================================================
+// SETTINGS — STOCKAGE
+// ===================================================
+function saveStorageSettings() {
+  appSettings.autoDownloadPhotos = document.getElementById('autoDownloadPhotos')?.checked;
+  appSettings.autoDownloadVideos = document.getElementById('autoDownloadVideos')?.checked;
+  appSettings.autoDownloadDocs   = document.getElementById('autoDownloadDocs')?.checked;
+  saveSettings();
+  toast('✅ Préférences sauvegardées');
+}
+
+function estimateCacheSize() {
+  const label = document.getElementById('cacheSizeLabel');
+  if (!label) return;
+  if ('storage' in navigator && 'estimate' in navigator.storage) {
+    navigator.storage.estimate().then(({ usage }) => {
+      label.textContent = usage ? `~${(usage / 1024 / 1024).toFixed(1)} Mo utilisés` : 'Moins de 1 Mo';
+    });
+  } else {
+    label.textContent = 'Estimation non disponible';
+  }
+}
+
+function clearAppCache() {
+  if ('caches' in window) {
+    caches.keys().then(names => names.forEach(n => caches.delete(n)));
+  }
+  localStorage.removeItem('zk_msg_cache');
+  toast('✅ Cache vidé');
+  estimateCacheSize();
+}
+
 
 // TYPING INDICATOR — broadcast
 function handleTyping() {
@@ -2426,20 +3532,57 @@ async function sendAudioMessage() {
   document.getElementById('audioBtn').classList.remove('recording');
   document.getElementById('recordingUI').classList.remove('show');
   if (!audioChunks.length) return;
+
   const blob = new Blob(audioChunks, { type: 'audio/webm' });
+  audioChunks = [];
+  const durStr = `${Math.floor(recSeconds/60)}:${(recSeconds%60).toString().padStart(2,'0')}`;
+
   if (DEMO_MODE) {
     const url = URL.createObjectURL(blob);
-    const fake = { id: Date.now(), content: url, media_url: url, type: 'audio', sender_id: 'me', created_at: new Date().toISOString(), duration: `0:${recSeconds.toString().padStart(2,'0')}`, profiles: {} };
-    appendMessage(fake);
+    appendMessage({ id: Date.now(), content: url, media_url: url, type: 'audio', sender_id: 'me', created_at: new Date().toISOString(), duration: durStr, profiles: {} });
     return;
   }
-  const path = `audio/${currentUser.id}/${Date.now()}.webm`;
-  await sb.storage.from('media').upload(path, blob);
-  const { data: urlData } = sb.storage.from('media').getPublicUrl(path);
-  const table = currentChatType === 'group' ? 'group_messages' : 'messages';
-  const idField = currentChatType === 'group' ? 'group_id' : 'conversation_id';
-  const durStr = `${Math.floor(recSeconds/60)}:${(recSeconds%60).toString().padStart(2,'0')}`;
-  await sb.from(table).insert({ [idField]: currentChatId, sender_id: currentUser.id, content: urlData.publicUrl, media_url: urlData.publicUrl, type: 'audio', duration: durStr });
+
+  // Optimiste audio
+  const optId = 'opt-audio-' + Date.now();
+  const localUrl = URL.createObjectURL(blob);
+  appendMessage({ id: optId, content: localUrl, media_url: localUrl, type: 'audio', sender_id: currentUser.id, created_at: new Date().toISOString(), duration: durStr, profiles: { username: currentProfile?.username || '' }, _pending: true });
+  const optEl = document.querySelector(`.msg-bubble-wrap[data-id="${optId}"]`);
+  if (optEl) optEl.style.opacity = '0.6';
+
+  try {
+    const path = `audio/${currentUser.id}/${Date.now()}.webm`;
+    const { error: upErr } = await sb.storage.from('media').upload(path, blob, { contentType: 'audio/webm' });
+    if (upErr) { if (optEl) optEl.remove(); toast('❌ Upload audio: ' + upErr.message); return; }
+
+    const { data: urlData } = sb.storage.from('media').getPublicUrl(path);
+    const table   = currentChatType === 'group' ? 'group_messages' : 'messages';
+    const idField = currentChatType === 'group' ? 'group_id' : 'conversation_id';
+
+    let payload = { [idField]: currentChatId, sender_id: currentUser.id, content: urlData.publicUrl, media_url: urlData.publicUrl, type: 'audio', duration: durStr };
+    let { data: inserted, error } = await sb.from(table).insert(payload).select('id').single();
+
+    if (error && (error.code === '42703' || error.message?.includes('column'))) {
+      const minimal = { [idField]: currentChatId, sender_id: currentUser.id, content: urlData.publicUrl };
+      const res = await sb.from(table).insert(minimal).select('id').single();
+      error = res.error; inserted = res.data;
+    }
+
+    if (error) { if (optEl) optEl.remove(); toast('❌ ' + error.message); return; }
+
+    if (inserted?.id && optEl) {
+      optEl.dataset.id = inserted.id;
+      optEl.style.opacity = '';
+      const st = optEl.querySelector('.msg-status');
+      if (st) { st.textContent = '✓✓'; st.style.color = ''; }
+    }
+    if (currentChatType === 'private') {
+      sb.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', currentChatId).then();
+    }
+  } catch(e) {
+    if (optEl) optEl.remove();
+    toast('❌ ' + e.message);
+  }
 }
 
 // AUDIO PLAYBACK
@@ -2713,22 +3856,36 @@ async function startFoundUserChat() {
 
 async function startPrivateChat(otherId, name) {
   if (DEMO_MODE) { closeModal('newChatModal'); toast('Mode démo - Supabase requis'); return; }
+
+  // Chercher une conversation existante dans les deux sens
   const { data: existing } = await sb.from('conversations')
     .select('id')
     .or(`and(user1_id.eq.${currentUser.id},user2_id.eq.${otherId}),and(user1_id.eq.${otherId},user2_id.eq.${currentUser.id})`)
-    .single();
+    .maybeSingle();
+
   let convId;
   if (existing) {
     convId = existing.id;
   } else {
+    const now = new Date().toISOString();
     const { data: newConv, error: convErr } = await sb.from('conversations')
-      .insert({ user1_id: currentUser.id, user2_id: otherId })
-      .select().single();
-    if (convErr || !newConv) { toast('❌ Erreur création conversation: ' + (convErr?.message || 'inconnu')); return; }
+      .insert({
+        user1_id: currentUser.id,
+        user2_id: otherId,
+        updated_at: now,   // ← critique : sans ça la conv n'apparaît pas dans le tri
+        created_at: now
+      })
+      .select()
+      .single();
+    if (convErr || !newConv) {
+      toast('❌ Erreur création conversation: ' + (convErr?.message || 'inconnu'));
+      return;
+    }
     convId = newConv.id;
   }
+
   closeModal('newChatModal');
-  loadChats();
+  await loadChats();   // recharger AVANT d'ouvrir pour que la conv apparaisse
   openChat(convId, 'private', name, otherId);
 }
 
@@ -2757,7 +3914,11 @@ function switchMainTab(tab) {
   document.getElementById('fabBtn').style.display = tab==='chats'?'flex':'none';
 }
 
-function openModal(id) { document.getElementById(id).classList.add('show'); }
+function openModal(id) {
+  // Réinitialiser le modal de statut à chaque ouverture
+  if (id === 'newStatusModal') resetStatusModal();
+  document.getElementById(id).classList.add('show');
+}
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function closeAllModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); }
 function overlayClose(e, id) { if (e.target === e.currentTarget) closeModal(id); }
@@ -2800,18 +3961,164 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// PWA Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const sw = `
-      const CACHE='zekchat-v2';
-      self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['/']))));
-      self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));
-    `;
-    const blob = new Blob([sw], { type: 'application/javascript' });
-    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
-  });
+// ===================================================
+// SERVICE WORKER + NOTIFICATIONS PUSH EN ARRIÈRE-PLAN
+// ===================================================
+const SW_CODE = `
+const CACHE = 'zekchat-v3';
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+self.addEventListener('fetch', e => {
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+});
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'PUSH_NOTIF') {
+    const { title, body, tag } = e.data;
+    self.registration.showNotification(title, {
+      body,
+      icon: '',
+      badge: '',
+      tag: tag || 'zekchat-msg',
+      renotify: true,
+      vibrate: [200, 100, 200],
+      data: { url: self.location.href }
+    });
+  }
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const found = list.find(c => 'focus' in c);
+      if (found) return found.focus();
+      return clients.openWindow(e.notification.data && e.notification.data.url ? e.notification.data.url : '/');
+    })
+  );
+});
+`;
+
+let swRegistration = null;
+
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  // Le blob URL n'est pas supporté en fichier local (content:// ou blob-request://)
+  // Dans ce cas on skip silencieusement — les notifs directes restent disponibles
+  const proto = location.protocol;
+  if (proto !== 'https:' && proto !== 'http:') {
+    console.info('ZeKChAt SW skipped (not HTTP/HTTPS)');
+    return;
+  }
+  try {
+    const blob = new Blob([SW_CODE], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    swRegistration = await navigator.serviceWorker.register(swUrl);
+    console.log('ZeKChAt SW enregistré');
+  } catch(e) {
+    console.warn('SW registration failed:', e);
+  }
 }
+
+// ===================================================
+// PWA MANIFEST — injection dynamique
+// ===================================================
+(function injectPWAManifest() {
+  // Générer une icône SVG en base64 pour le manifest
+  const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="100" fill="#0a0f1e"/>
+    <text x="256" y="340" font-size="260" text-anchor="middle" font-family="Arial,sans-serif" fill="#00d4aa">Z</text>
+  </svg>`;
+  const iconB64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgIcon)));
+
+  const manifest = {
+    name: 'ZeKChAt',
+    short_name: 'ZeKChAt',
+    description: 'Messagerie instantanée ZeKChAt',
+    start_url: location.href,
+    scope: location.href,
+    display: 'standalone',
+    background_color: '#0a0f1e',
+    theme_color: '#00d4aa',
+    orientation: 'portrait',
+    icons: [
+      { src: iconB64, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+      { src: iconB64, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.getElementById('pwaManifest');
+  if (link) link.href = url;
+})();
+
+const _notifOK = () => typeof Notification !== 'undefined' && 'Notification' in window;
+
+async function sendPushNotif(title, body, tag) {
+  if (document.visibilityState === 'visible') return;
+  if (!_notifOK()) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    if (swRegistration) {
+      const sw = swRegistration.active || swRegistration.waiting || swRegistration.installing;
+      if (sw) {
+        sw.postMessage({ type: 'PUSH_NOTIF', title, body, tag: tag || 'zekchat-msg' });
+        return;
+      }
+    }
+    new Notification(title, { body, tag: tag || 'zekchat-msg' });
+  } catch(e) { console.warn('notif:', e); }
+}
+
+// ===================================================
+// PWA INSTALL PROMPT
+// ===================================================
+let pwaInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  pwaInstallPrompt = e;
+  // Afficher le bouton d'installation si disponible
+  const btn = document.getElementById('pwaInstallBtn');
+  if (btn) btn.style.display = 'flex';
+  // Aussi afficher un toast après 5s si pas encore installé
+  setTimeout(() => {
+    if (pwaInstallPrompt) toast('📲 Installe ZeKChAt comme une app !');
+  }, 5000);
+});
+
+window.addEventListener('appinstalled', () => {
+  pwaInstallPrompt = null;
+  toast('✅ ZeKChAt installé avec succès !');
+  const btn = document.getElementById('pwaInstallBtn');
+  if (btn) btn.style.display = 'none';
+});
+
+async function triggerPWAInstall() {
+  if (pwaInstallPrompt) {
+    pwaInstallPrompt.prompt();
+    const { outcome } = await pwaInstallPrompt.userChoice;
+    if (outcome === 'accepted') toast('✅ Installation en cours...');
+    pwaInstallPrompt = null;
+  } else if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+    toast('✅ ZeKChAt est déjà installé !');
+  } else {
+    toast('📲 Appuie sur ⋮ → "Ajouter à l\'écran d\'accueil"');
+  }
+}
+
+window.addEventListener('load', () => {
+  initServiceWorker();
+  if (_notifOK() && Notification.permission === 'default') {
+    setTimeout(() => {
+      Notification.requestPermission().then(p => {
+        if (p === 'granted') toast('🔔 Notifications activées !');
+      });
+    }, 3500);
+  }
+});
 
 // ===================================================
 // START
